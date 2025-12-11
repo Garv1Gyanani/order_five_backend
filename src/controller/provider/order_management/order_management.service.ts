@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Like, Repository } from 'typeorm';
 import { Product } from 'src/schema/product.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -345,14 +345,14 @@ export class OrderService {
         try {
             const activeOrderCount = await this.OrderModel.count({
                 where: {
-                    provider_id:user_id,
-                     status: In(['UPCOMING', 'ACCEPTED']),
+                    provider_id: user_id,
+                    status: In(['UPCOMING', 'ACCEPTED']),
                 },
-            }); 
+            });
 
             const completedOrderCount = await this.OrderModel.count({
                 where: {
-                    provider_id:user_id,
+                    provider_id: user_id,
                     status: 'DELIVERED',
                 },
             });
@@ -363,7 +363,7 @@ export class OrderService {
                 data: {
                     activeOrders: activeOrderCount,
                     completedOrders: completedOrderCount,
-                }, 
+                },
             };
         } catch (error) {
             throw new Error(error.message);
@@ -542,7 +542,7 @@ export class OrderService {
             return {
                 status: true,
                 message: 'Transaction data get success',
-                data:walletData
+                data: walletData
             };
         } catch (error) {
             throw new Error('Error retrieving wallet details: ' + error.message);

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
 import { Category } from 'src/schema/category.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -70,9 +70,9 @@ export class CategoryService {
     async getAllPages(page: number = 1, pageSize: number = 10, search: string = '') {
         try {
             const { limit, offset } = CommonService.getPagination(page, pageSize);
-    
+
             const queryBuilder = this.CategoryModel.createQueryBuilder('category');
-    
+
             // Add search conditions if provided
             if (search) {
                 queryBuilder.where(
@@ -80,11 +80,11 @@ export class CategoryService {
                     { search: `%${search}%` }
                 );
             }
-    
+
             // Pagination, ordering, and relations
             queryBuilder.skip(offset).take(limit).orderBy('category.createdAt', 'DESC');
             queryBuilder.leftJoinAndSelect('category.parent', 'parent');
-    
+
             // Select fields
             queryBuilder.select([
                 'category.id',
@@ -97,9 +97,9 @@ export class CategoryService {
                 'parent.category_name',
                 'parent.ar_category_name',
             ]);
-    
+
             const [pages, count] = await queryBuilder.getManyAndCount();
-    
+
             const paginatedData = CommonService.getPagingData({ count, rows: pages }, page, limit);
             return paginatedData;
         } catch (error) {
@@ -133,11 +133,11 @@ export class CategoryService {
         try {
             // Get the current time in Saudi Arabia (Riyadh) timezone (GMT+3)
             data.createdAt = moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss');
-    
+
             // Create a new category with the adjusted time
             let newCategory: any = await this.CategoryModel.create(data);
             newCategory = await this.CategoryModel.save(newCategory);
-    
+
             return newCategory;
         } catch (error) {
             throw new Error(error.message);

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { User } from 'src/schema/user.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -27,26 +27,26 @@ export class CustomerService {
     async getCustomerData(id: number) {
         try {
             const customer = await this.UserModel.findOne({ where: { user_role: OptionsMessage.USER_ROLE.CUSTOMER, id: id } });
-    
+
             if (!customer) {
                 throw new Error(CommonMessages.notFound('Customer'));
             }
-    
+
             const { password, ...customerData } = customer;
-    
+
             const customerRatings = await this.RatingModel.find({
                 where: { customer_id: id },
             });
-    
+
             const totalRatings = customerRatings.length;
-    
+
             // Calculate the average rating and round to the nearest 0.5
             const averageRating = totalRatings > 0
                 ? Math.round(
                     (customerRatings.reduce((sum, rating) => sum + parseFloat(rating.rating as unknown as string || "0"), 0) / totalRatings) * 2
-                  ) / 2
+                ) / 2
                 : 0;
-    
+
             return {
                 ...customerData,
                 totalRatings,
@@ -56,7 +56,7 @@ export class CustomerService {
             throw new Error(error.message);
         }
     }
-    
+
 
     // async getCustomerData(id: number) {
     //     try {
@@ -250,7 +250,7 @@ export class CustomerService {
             const [pages, count] = await this.NotificationService.findAndCount({
                 where: [
                     { user_id: customer_id },
-                    { user_id: null ,user_type:'customer' }, 
+                    { user_id: null, user_type: 'customer' },
                 ],
                 skip: offset,
                 take: limit,

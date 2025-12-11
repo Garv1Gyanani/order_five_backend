@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Product } from 'src/schema/product.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -186,7 +186,7 @@ export class ProductWishListService {
             const notificationDescription = `A customer has given a review. Please check the details`;
 
 
-          const dataPayload=  await this.NotificationModel.save({
+            const dataPayload = await this.NotificationModel.save({
                 title: notificationTitle,
                 description: notificationDescription,
                 user_id: realUser.id,
@@ -204,7 +204,7 @@ export class ProductWishListService {
                     data: {
                         title: dataPayload.title,
                         description: dataPayload.description,
-                        user_id: dataPayload.user_id.toString(), 
+                        user_id: dataPayload.user_id.toString(),
                         click_event: dataPayload.click_event,
                         createdAt: dataPayload.createdAt.toISOString(),
                     },

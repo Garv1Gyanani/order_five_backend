@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Wallet_req } from 'src/schema/wallet_req.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { CommonMessages } from 'src/common/common-messages';
 import * as moment from 'moment-timezone';

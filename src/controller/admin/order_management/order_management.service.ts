@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Like, Repository } from 'typeorm';
 import { Product } from 'src/schema/product.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -229,11 +229,11 @@ export class OrderService {
                 where: { id: In(address_id) },
             });
             const customersrating = await this.RatingModel.find({
-                where: {order_id: In(orderIDs), customer_id: In(customerIds), provider_id: IsNull() },
+                where: { order_id: In(orderIDs), customer_id: In(customerIds), provider_id: IsNull() },
             });
 
             const providersrating = await this.RatingModel.find({
-                where: {order_id: In(orderIDs) , provider_id: In(providerIds), customer_id: IsNull() },
+                where: { order_id: In(orderIDs), provider_id: In(providerIds), customer_id: IsNull() },
             });
             const productDetails = await this.ProductModel.find({
                 where: { id: In(productIds) },
@@ -366,10 +366,10 @@ export class OrderService {
                 where: { id: In(address_id) },
             });
             const customersrating = await this.RatingModel.find({
-                where: {order_id:In(orderIds) , customer_id: In(customerIds), provider_id: IsNull() },
+                where: { order_id: In(orderIds), customer_id: In(customerIds), provider_id: IsNull() },
             });
             const providersrating = await this.RatingModel.find({
-                where: {order_id: In(orderIds), provider_id: In(providerIds), customer_id: IsNull() },
+                where: { order_id: In(orderIds), provider_id: In(providerIds), customer_id: IsNull() },
             });
             const productDetails = await this.ProductModel.find({
                 where: { id: In(productIds) },
@@ -452,7 +452,7 @@ export class OrderService {
                 where: { id: In(providerIds) },
             });
             const customers = await this.UserRequestModel.find({
-                where: { id: In(customerIds) }, 
+                where: { id: In(customerIds) },
             });
             const address = await this.UserLocationModel.find({
                 where: { id: In(address_id) },

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
 import { User } from 'src/schema/user.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -81,15 +81,15 @@ export class UserService {
             const user = await this.UserModel.findOne({
                 where: { user_role: OptionsMessage.USER_ROLE.PROVIDER, id: id }
             });
-    
+
             console.log(user);
-    
+
             if (!user) {
                 throw new Error(CommonMessages.notFound('Provider'));
             }
-    
+
             const { password, subscription_id, ...userData } = user;
-    
+
             let response: any = {
                 ...userData,
                 is_plan: true, // Static value
@@ -107,54 +107,54 @@ export class UserService {
                     updatedAt: "2025-12-08T14:01:04.265Z",
                 },
             };
-    
+
             if (subscription_id) {
                 const subscription = await this.Subscription.findOne({ where: { id: subscription_id } });
                 const txn_id = await this.wallet_req.findOne({
                     where: { user_id: id, order_type: "Subscription" },
                     order: { id: 'DESC' }
                 });
-    
+
                 if (subscription) {
                     response.subscription = subscription;
                     response.txn_id = txn_id?.transaction_id || null;
                 }
             }
-    
+
             const customerRatings = await this.Rating.find({ where: { provider_id: id } });
             const totalRatings = customerRatings.length;
-    
+
             // Calculate the average rating and round to the nearest 0.5
             const averageRating = totalRatings > 0
                 ? Math.round(
                     (customerRatings.reduce((sum, rating) => sum + parseFloat(rating.rating as unknown as string || "0"), 0) / totalRatings) * 2
-                  ) / 2
+                ) / 2
                 : 0;
-    
+
             response.totalRatings = totalRatings;
             response.averageRating = averageRating.toFixed(2);
-    
+
             const approvedRequests = await this.ProductReq.find({
                 where: { user_id: id, deletedAt: null },
             });
-    
+
             const productIds = approvedRequests.map(req => req.product_id);
-    
+
             const validProductsCount = await this.product.count({
                 where: {
                     id: In(productIds),
                     deletedAt: null
                 }
             });
-    
+
             response.product_count = validProductsCount;
-    
+
             return response;
         } catch (error) {
             throw new Error(error.message);
         }
     }
-    
+
 
     // async getUserData(id: number) {
     //     try {
@@ -192,7 +192,7 @@ export class UserService {
 
     //         const customerRatings = await this.Rating.find({ where: { provider_id: id } });
     //         const totalRatings = customerRatings.length;
-    
+
     //         // Calculate the average rating and round to the nearest 0.5
     //         const averageRating = totalRatings > 0
     //             ? Math.round(
@@ -223,7 +223,7 @@ export class UserService {
     //         throw new Error(error.message);
     //     }
     // }
-    
+
 
 
 

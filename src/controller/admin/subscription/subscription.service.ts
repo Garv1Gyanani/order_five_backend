@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -262,27 +262,27 @@ export class SubscriptionService {
     ) {
         try {
             const { limit, offset } = CommonService.getPagination(page, pageSize);
-    
+
             const [pages, count] = await this.SubscriptionOrder.findAndCount({
                 skip: offset,
                 take: limit,
                 order: { createdAt: 'DESC' },
             });
-    
+
             const enrichedData = await Promise.all(
                 pages.map(async (order) => {
                     const subscription = await this.SubscriptionModel.findOne({
                         where: { id: order.subscription_id },
                     });
-    
+
                     const user = await this.UserModel.findOne({
                         where: { id: order.user_id },
                     });
-    
+
                     const expiry_date = user ? user.expiry_date : null;
                     const now = new Date();
                     const sub_status = expiry_date && new Date(expiry_date) > now ? 'active' : 'expired';
-    
+
                     return {
                         ...order,
                         plan_type: subscription ? subscription.name : 'N/A',
@@ -293,7 +293,7 @@ export class SubscriptionService {
                     };
                 })
             );
-    
+
             const now = new Date();
             const filteredData = enrichedData.filter((item) => {
                 // Filter by status (active or expired)
@@ -315,13 +315,13 @@ export class SubscriptionService {
                 }
                 return true;
             });
-    
+
             const paginatedData = CommonService.getPagingData(
                 { count: filteredData.length, rows: filteredData },
                 page,
                 limit
             );
-    
+
             return {
                 status: true,
                 message: 'Subscriber list has been retrieved successfully!',
@@ -331,7 +331,7 @@ export class SubscriptionService {
             throw new Error(error.message);
         }
     }
-    
+
 
 
 

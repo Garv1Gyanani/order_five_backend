@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Not, Repository } from 'typeorm';
 import { User } from 'src/schema/user.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -78,7 +78,7 @@ export class CustomerService {
 
             const { password, ...userData } = user;
             return {
-                ...userData, orderCount, walletAmount, ReviewRating, rating: roundedRating  
+                ...userData, orderCount, walletAmount, ReviewRating, rating: roundedRating
             };
         } catch (error) {
             throw new Error(error.message);

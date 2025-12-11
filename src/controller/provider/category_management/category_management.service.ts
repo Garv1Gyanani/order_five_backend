@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Category } from 'src/schema/category.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -79,43 +79,43 @@ export class CategoryService {
     // Get all Categorys with pagination and search
     async getAllPages(page: number = 1, pageSize: number = 10, search: string = '', cattype: any) {
         try {
-          const { limit, offset } = CommonService.getPagination(page, pageSize);
-      
-          // Initialize Query Builder
-          const queryBuilder = this.CategoryModel.createQueryBuilder('category')
-            .where('category.is_active = :isActive', { isActive: 1 }) // Base condition
-            .orderBy('category.createdAt', 'DESC') // Order by creation date
-            .skip(offset)
-            .take(limit);
-      
-          // Apply filter for cattype if provided
-          if (cattype) {
-            queryBuilder.andWhere('category.provider_type = :providerType', { providerType: cattype });
-          }
-      
-          // Apply search condition for `name` and `ar_category_name`
-          if (search) {
-            queryBuilder.andWhere(
-              '(category.name LIKE :search COLLATE utf8mb4_general_ci OR category.ar_category_name LIKE :search COLLATE utf8mb4_general_ci)',
-              { search: `%${search}%` }
-            );
-          }
-           // Execute the query and get paginated results
-          const [pages, count] = await queryBuilder.getManyAndCount();
-      
-          // Format the paginated response
-          return {
-            totalItems: count,
-            data: pages,
-            totalPages: Math.ceil(count / pageSize),
-            currentPage: Number(page),
-          };
+            const { limit, offset } = CommonService.getPagination(page, pageSize);
+
+            // Initialize Query Builder
+            const queryBuilder = this.CategoryModel.createQueryBuilder('category')
+                .where('category.is_active = :isActive', { isActive: 1 }) // Base condition
+                .orderBy('category.createdAt', 'DESC') // Order by creation date
+                .skip(offset)
+                .take(limit);
+
+            // Apply filter for cattype if provided
+            if (cattype) {
+                queryBuilder.andWhere('category.provider_type = :providerType', { providerType: cattype });
+            }
+
+            // Apply search condition for `name` and `ar_category_name`
+            if (search) {
+                queryBuilder.andWhere(
+                    '(category.name LIKE :search COLLATE utf8mb4_general_ci OR category.ar_category_name LIKE :search COLLATE utf8mb4_general_ci)',
+                    { search: `%${search}%` }
+                );
+            }
+            // Execute the query and get paginated results
+            const [pages, count] = await queryBuilder.getManyAndCount();
+
+            // Format the paginated response
+            return {
+                totalItems: count,
+                data: pages,
+                totalPages: Math.ceil(count / pageSize),
+                currentPage: Number(page),
+            };
         } catch (error) {
-          console.error('Error fetching categories:', error);
-          throw new Error(error.message);
+            console.error('Error fetching categories:', error);
+            throw new Error(error.message);
         }
-      }
-      
+    }
+
 
     // Get Category data by ID
     async getDatabyid(id: number) {

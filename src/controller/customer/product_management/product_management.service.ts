@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Like, Repository } from 'typeorm';
 import { Product } from 'src/schema/product.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -36,23 +36,23 @@ export class ProductService {
     async getAllPages(page: number = 1, pageSize: number = 10, search: string = '', category_id: any, sort: any) {
         try {
             const { limit, offset } = CommonService.getPagination(page, pageSize);
-    
+
             const queryBuilder = this.ProductModel.createQueryBuilder('product')
                 .where('product.is_active = :is_active', { is_active: true });
-    
+
             if (category_id) {
                 queryBuilder.andWhere('product.category_id = :category_id', { category_id });
             }
-    
+
             if (search) {
                 queryBuilder.andWhere(
                     new Brackets((qb) => {
                         qb.where('product.product_name LIKE :search', { search: `%${search}%` })
-                          .orWhere('product.ar_product_name LIKE :search', { search: `%${search}%` });
+                            .orWhere('product.ar_product_name LIKE :search', { search: `%${search}%` });
                     })
                 );
             }
-    
+
             let order: any = { createdAt: 'DESC' };
             if (sort == OptionsMessage.PRODUCT_SORT.price_high_to_low) {
                 order = { product_price: 'DESC' };
@@ -61,43 +61,43 @@ export class ProductService {
             } else if (sort == OptionsMessage.PRODUCT_SORT.newest) {
                 order = { createdAt: 'DESC' };
             }
-    
+
             queryBuilder.orderBy(order);
             queryBuilder.skip(offset).take(limit);
-    
+
             const [pages, count] = await queryBuilder.getManyAndCount();
-    
+
             let product_req_data: any = await this.ProductRequestModel.find({
                 where: { status: OptionsMessage.PRODUCT_STATUS.Approved }
             });
             product_req_data = JSON.parse(JSON.stringify(product_req_data));
-    
+
             // Filter out products that do not have a matching request in product_req_data
             const filteredPages = pages.filter((product) =>
                 product_req_data.some((req) => req.product_id === product.id)
             );
-    
+
             const filteredCount = filteredPages.length;
-    
+
             const paginatedData: any = CommonService.getPagingData(
                 { count: filteredCount, rows: filteredPages },
                 page,
                 limit
             );
-    
+
             paginatedData.data = JSON.parse(JSON.stringify(paginatedData.data));
-    
+
             for (let element of paginatedData.data) {
                 let product_data = product_req_data.filter((o) => o.product_id == element.id);
                 element.provider_available = product_data.length || 0;
             }
-    
+
             return paginatedData;
         } catch (error) {
             throw new Error(error.message);
         }
     }
-    
+
 
     // Get Product data by ID
     async getDatabyid(id: number) {

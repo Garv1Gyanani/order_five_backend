@@ -3,7 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Like, Repository } from 'typeorm';
 import { Product } from 'src/schema/product.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -331,9 +331,9 @@ export class OrderService {
                     //     ? userRatings.reduce((sum, r) => sum + r.rating, 0) / reviewCount
                     //     : 0;
                     const averageRating = reviewCount
-                    ? Math.round((userRatings.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 2) / 2
-                    : 0;
-                
+                        ? Math.round((userRatings.reduce((sum, r) => sum + r.rating, 0) / reviewCount) * 2) / 2
+                        : 0;
+
                     if (averageRating < minRating || averageRating > maxRating) return null;
 
                     const productRequest = productRequests.find((req) => req.user_id === location.user_id);
@@ -341,7 +341,7 @@ export class OrderService {
                     const userDetails = await this.UserRequestModel.findOne({
                         where: {
                             id: location.user_id,
-                            current_status:true,
+                            current_status: true,
                             name: s ? Like(`%${s}%`) : undefined,
                         }
                     });
@@ -368,8 +368,8 @@ export class OrderService {
                         userDetails,
                         reviewCount,
                         averageRating: ratingReal?.averageRating
-                        ? (Math.round(ratingReal.averageRating * 2) / 2).toFixed(1)
-                        : null,
+                            ? (Math.round(ratingReal.averageRating * 2) / 2).toFixed(1)
+                            : null,
                         isWish,
                         userwallet: userwallet.wallet_balance,
                         useraddress,
@@ -459,7 +459,7 @@ export class OrderService {
             data.status = 'UPCOMING';
 
             await this.UserRequestModel.update(user.id, { wallet_balance: user.wallet_balance });
-            data.createdAt = moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss');  
+            data.createdAt = moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss');
 
             const newOrder: any = await this.OrderModel.create(data);
             const newOrderRequest = await this.OrderModel.save(newOrder);
@@ -476,7 +476,7 @@ export class OrderService {
                 amount: platformCharge,
                 available_amount: user.wallet_balance,
                 remark: product.product_name,
-                order_type:'order',
+                order_type: 'order',
                 status: 'Approved',
                 date: new Date(),
             });
@@ -486,7 +486,7 @@ export class OrderService {
             const notificationTitle = "Order place";
             const notificationDescription = `Order has been placed.`;
 
-           const dataPayload= await this.NotificationModel.save({
+            const dataPayload = await this.NotificationModel.save({
                 title: notificationTitle,
                 description: notificationDescription,
                 user_id: provider.id,
@@ -797,7 +797,7 @@ export class OrderService {
         try {
             const { limit, offset } = CommonService.getPagination(page, pageSize);
 
-            const whereCondition: any = { user_id ,status:'ACCEPTED' };
+            const whereCondition: any = { user_id, status: 'ACCEPTED' };
 
 
             const [pages, count] = await this.OrderModel.findAndCount({
@@ -1037,8 +1037,8 @@ export class OrderService {
 
     async getpayment(id: string) {
         try {
-            const walletData = await this.Wallet_req.findOne({ where: { transaction_id: id } });3
-            if(!walletData){
+            const walletData = await this.Wallet_req.findOne({ where: { transaction_id: id } }); 3
+            if (!walletData) {
                 throw new Error("No transactrion data was updated.");
 
             }

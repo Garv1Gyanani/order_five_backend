@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
 import { Product } from 'src/schema/product.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -43,7 +43,7 @@ export class ProductService {
     async getAllPages(page: number = 1, pageSize: number = 10, search: string = '') {
         try {
             const { limit, offset } = CommonService.getPagination(page, pageSize);
-    
+
             // Initialize Query Builder for products
             const queryBuilder = this.ProductModel.createQueryBuilder('product')
                 .select([
@@ -66,28 +66,28 @@ export class ProductService {
                 .orderBy('product.createdAt', 'DESC') // Order by createdAt
                 .skip(offset)
                 .take(limit);
-    
+
             // Execute query and fetch data
             const [pages, count] = await queryBuilder.getManyAndCount();
-    
+
             // Fetch category details based on category_id
             const categoryIds = pages.map((product) => product.category_id);
             const categories = await this.CategoryModel.findByIds(categoryIds);
-    
+
             // Fetch parent category details based on parent_category_id
             const parentCategoryIds = categories
                 .filter((category) => category.parent_category_id)
                 .map((category) => category.parent_category_id);
-    
+
             const parentCategories = await this.CategoryModel.findByIds(parentCategoryIds);
-    
+
             // Map categories and parent categories
             const productData = pages.map((product) => {
                 const category = categories.find((category) => category.id === product.category_id) as Category | undefined;
                 const parentCategory = parentCategories.find(
                     (parentCategory) => parentCategory.id === category?.parent_category_id
                 );
-    
+
                 return {
                     ...product,
                     category: {
@@ -97,14 +97,14 @@ export class ProductService {
                     parent_category: parentCategory ? parentCategory.category_name : null,
                 };
             });
-    
+
             // Unified search for both product and category-level data
             let filteredData = productData;
             if (search) {
                 filteredData = productData.filter((product) => {
                     const category = product.category || { category_name: '', ar_category_name: '' };
                     const parentCategory = product.parent_category || '';
-    
+
                     // Check if values are not null or undefined before applying toLowerCase()
                     const productName = product.product_name?.toLowerCase() || '';
                     const arProductName = product.ar_product_name?.toLowerCase() || '';
@@ -114,7 +114,7 @@ export class ProductService {
                     const categoryName = category.category_name?.toLowerCase() || '';
                     const arCategoryName = category.ar_category_name?.toLowerCase() || '';
                     const parentCategoryName = parentCategory.toLowerCase() || '';
-    
+
                     return (
                         productName.includes(search.toLowerCase()) ||
                         arProductName.includes(search.toLowerCase()) ||
@@ -127,7 +127,7 @@ export class ProductService {
                     );
                 });
             }
-    
+
             // Return the response with the filtered data
             return {
                 totalItems: count,
@@ -140,7 +140,7 @@ export class ProductService {
             throw new Error('Error fetching products');
         }
     }
-    
+
 
 
 
@@ -161,21 +161,21 @@ export class ProductService {
     }
 
     // Create Product data
-    
-async createData(data: any) {
-    try {
-        // Set the createdAt field to the current time in Saudi Arabia (Riyadh) timezone (GMT+3)
-        data.createdAt = moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss');
 
-        // Create a new product with the adjusted time
-        let newProduct: any = await this.ProductModel.create(data);
-        newProduct = await this.ProductModel.save(newProduct);
+    async createData(data: any) {
+        try {
+            // Set the createdAt field to the current time in Saudi Arabia (Riyadh) timezone (GMT+3)
+            data.createdAt = moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss');
 
-        return newProduct;
-    } catch (error) {
-        throw new Error(error.message);
+            // Create a new product with the adjusted time
+            let newProduct: any = await this.ProductModel.create(data);
+            newProduct = await this.ProductModel.save(newProduct);
+
+            return newProduct;
+        } catch (error) {
+            throw new Error(error.message);
+        }
     }
-}
 
     // Update Product data
     async updateData(id: number, updateData: Partial<Product>) {

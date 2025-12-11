@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository } from 'typeorm';
 import { Category } from 'src/schema/category.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -69,16 +69,16 @@ export class CategoryService {
     async getAllPages(page: number = 1, pageSize: number = 10, search: string = '', cattype: any) {
         try {
             const { limit, offset } = CommonService.getPagination(page, pageSize);
-    
+
             let wherequery: any = { is_active: true };
-    
+
             if (search) {
                 wherequery = [
                     { ...wherequery, category_name: Like(`%${search}%`) },
                     { ...wherequery, ar_category_name: Like(`%${search}%`) }
                 ];
             }
-    
+
             if (cattype) {
                 if (Array.isArray(wherequery)) {
                     // If wherequery is an array (due to search), add provider_type to each condition
@@ -91,14 +91,14 @@ export class CategoryService {
                     wherequery.provider_type = cattype;
                 }
             }
-    
+
             const [pages, count] = await this.CategoryModel.findAndCount({
                 where: wherequery,
                 skip: offset,
                 take: limit,
                 order: { createdAt: 'DESC' }
             });
-    
+
             const paginatedData = CommonService.getPagingData({ count, rows: pages }, page, limit);
             return paginatedData;
         } catch (error) {

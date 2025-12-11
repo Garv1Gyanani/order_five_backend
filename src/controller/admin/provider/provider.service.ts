@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Like, Repository } from 'typeorm';
 import { User } from 'src/schema/user.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -19,10 +19,10 @@ export class ProviderService {
         private readonly UserModel: Repository<User>,
         @InjectRepository(User_document)
         private readonly UserDocumentModel: Repository<User_document>,
-        
+
         @InjectRepository(Rating)
         private readonly RatingModel: Repository<Rating>,
-        
+
         @InjectRepository(Subscription)
         private readonly SubscriptionModel: Repository<Subscription>,
     ) { }
@@ -46,7 +46,7 @@ export class ProviderService {
     // Get a list of users
     async getUserList() {
         try {
-            const users = await this.UserModel.find({ where: { user_role: OptionsMessage.USER_ROLE.PROVIDER} });
+            const users = await this.UserModel.find({ where: { user_role: OptionsMessage.USER_ROLE.PROVIDER } });
 
             if (!users || users.length === 0) {
                 throw new Error(CommonMessages.notFound('Provider'));
@@ -71,7 +71,7 @@ export class ProviderService {
     //                 { user_role: OptionsMessage.USER_ROLE.PROVIDER, name: Like(`%${search}%`) },
     //             ];
     //         }
-            
+
     //         const [pages, count] = await this.UserModel.findAndCount({
     //             where: whereConditions,
     //             skip: offset,
@@ -89,7 +89,7 @@ export class ProviderService {
     async getAllPages(page: number = 1, pageSize: number = 10, search: string = '') {
         try {
             const { limit, offset } = CommonService.getPagination(page, pageSize);
-    
+
             // Construct base condition
             let whereConditions: any = { user_role: OptionsMessage.USER_ROLE.PROVIDER };
             if (search) {
@@ -99,7 +99,7 @@ export class ProviderService {
                     { user_role: OptionsMessage.USER_ROLE.PROVIDER, name: Like(`%${search}%`) },
                 ];
             }
-    
+
             // Fetch providers with pagination
             const [providers, count] = await this.UserModel.findAndCount({
                 where: whereConditions,
@@ -107,12 +107,12 @@ export class ProviderService {
                 take: limit,
                 order: { createdAt: 'DESC' },
             });
-    
+
             const providerIds = providers.map((provider) => provider.id);
             const subscriptionIds = providers
                 .map((provider) => provider.subscription_id)
                 .filter((id) => id !== null); // Remove null values
-    
+
             let ratings = [];
             if (providerIds.length > 0) {
                 ratings = await this.RatingModel.createQueryBuilder('ratings')
@@ -123,24 +123,24 @@ export class ProviderService {
                     .groupBy('ratings.provider_id')
                     .getRawMany();
             }
-    
+
             let subscriptionsMap = {};
             if (subscriptionIds.length > 0) {
                 const subscriptions = await this.SubscriptionModel.find({
                     where: { id: In(subscriptionIds) },
                     select: ['id', 'name'],
                 });
-    
+
                 // Map subscription id to its name
                 subscriptionsMap = subscriptions.reduce((acc, sub) => {
                     acc[sub.id] = sub.name;
                     return acc;
                 }, {});
             }
-    
-                // Function to round to the nearest 0.5
-                const roundToHalf = (value: number) => Math.round(value * 2) / 2;
-    
+
+            // Function to round to the nearest 0.5
+            const roundToHalf = (value: number) => Math.round(value * 2) / 2;
+
             // Map ratings to providers and add subscription plan_type
             const ratingsMap = ratings.reduce((acc, rating) => {
                 acc[rating.providerId] = {
@@ -149,26 +149,26 @@ export class ProviderService {
                 };
                 return acc;
             }, {});
-    
+
             const providersWithDetails = providers.map((provider) => ({
                 ...provider,
                 averageRating: ratingsMap[provider.id]?.averageRating || 0, // Default to 0 if no ratings
                 ratingCount: ratingsMap[provider.id]?.ratingCount || 0,   // Default to 0 if no ratings
                 plan_type: provider.subscription_id ? subscriptionsMap[provider.subscription_id] || null : null, // Get subscription name
             }));
-    
+
             const paginatedData = CommonService.getPagingData({ count, rows: providersWithDetails }, page, limit);
             return paginatedData;
         } catch (error) {
             throw new Error(error.message);
         }
     }
-    
-    
+
+
     // async getAllPages(page: number = 1, pageSize: number = 10, search: string = '') {
     //     try {
     //         const { limit, offset } = CommonService.getPagination(page, pageSize);
-    
+
     //         let whereConditions: any = { user_role: OptionsMessage.USER_ROLE.PROVIDER };
     //         if (search) {
     //             whereConditions = [
@@ -177,7 +177,7 @@ export class ProviderService {
     //                 { user_role: OptionsMessage.USER_ROLE.PROVIDER, name: Like(`%${search}%`) },
     //             ];
     //         }
-    
+
     //         // Fetch providers with pagination
     //         const [providers, count] = await this.UserModel.findAndCount({
     //             where: whereConditions,
@@ -185,69 +185,69 @@ export class ProviderService {
     //             take: limit,
     //             order: { createdAt: 'DESC' }
     //         });
-    
+
     //         // Fetch average ratings for each provider
     //         const providerIds = providers.map((provider) => provider.id);
-    
+
     //         const ratings = await this.RatingModel.createQueryBuilder('ratings')
     //             .select('ratings.provider_id', 'providerId')
     //             .addSelect('AVG(ratings.rating)', 'averageRating')
     //             .where('ratings.provider_id IN (:...providerIds)', { providerIds })
     //             .groupBy('ratings.provider_id')
     //             .getRawMany();
-    
+
     //         // Function to round to the nearest 0.5
     //         const roundToHalf = (value: number) => Math.round(value * 2) / 2;
-    
+
     //         // Map ratings to their respective providers
     //         const ratingsMap = ratings.reduce((acc, rating) => {
     //             acc[rating.providerId] = roundToHalf(parseFloat(rating.averageRating));
     //             return acc;
     //         }, {});
-    
+
     //         // Add ratings to provider data
     //         const providersWithRatings = providers.map((provider) => ({
     //             ...provider,
     //             averageRating: ratingsMap[provider.id] || 0, // Default to 0 if no ratings
     //         }));
-    
+
     //         const paginatedData = CommonService.getPagingData({ count, rows: providersWithRatings }, page, limit);
     //         return paginatedData;
     //     } catch (error) {
     //         throw new Error(error.message);
     //     }
     // }
-    
-    
-    
+
+
+
 
     // Create user data
- 
+
     async createUserData(data: any) {
         try {
             // Set the createdAt field to the current time in Saudi Arabia (Riyadh) timezone (GMT+3)
             data.createdAt = moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss');
-    
+
             // Set the user role to PROVIDER
             data.user_role = OptionsMessage.USER_ROLE.PROVIDER;
-    
+
             // Check if the user already exists
             const user = await this.UserModel.findOne({ where: { phone_num: data.phone_num } });
-    
+
             if (user) {
                 throw new Error(CommonMessages.alreadyFound('Provider'));
             }
-    
+
             // Create a new user with the adjusted time
             let newUser: any = await this.UserModel.create(data);
             newUser = await this.UserModel.save(newUser);
-    
+
             return newUser;
         } catch (error) {
             throw new Error(error.message);
         }
     }
-    
+
 
     // Update user data
     async updateUserData(id: number, updateData: Partial<User>) {
@@ -321,7 +321,7 @@ export class ProviderService {
                     where: { user_id: user_id },
                     relations: ['required_doc'],
                     select: {
-                        required_doc: { id: true, title: true, ar_title: true, type:true, is_required: true }
+                        required_doc: { id: true, title: true, ar_title: true, type: true, is_required: true }
                     },
                 }
             );

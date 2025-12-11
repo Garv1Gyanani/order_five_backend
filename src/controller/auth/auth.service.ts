@@ -2,7 +2,7 @@ import { Injectable, ConflictException, InternalServerErrorException, Unauthoriz
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../../schema/user.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { AuthService } from 'src/authGuard/jwt.guard';
 import { Otp } from 'src/schema/otp.schema';
 import CommonService from 'src/common/common.util';
@@ -157,9 +157,9 @@ export class LoginService {
       return { status: false, message: CommonMessages.user_inactive };
     }
 
-    if (existingUser.is_block ) {
+    if (existingUser.is_block) {
 
-      if(existingUser.is_pr_block){
+      if (existingUser.is_pr_block) {
         return { status: false, message: CommonMessages.user_block };
 
       }
@@ -291,9 +291,9 @@ export class LoginService {
       if (user.is_block) {
         const currentDate = new Date();
 
-        if(user.is_pr_block){
+        if (user.is_pr_block) {
           return { status: false, message: CommonMessages.user_block };
-  
+
         }
 
         if (user.block_date && user.block_date > currentDate) {

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Like, Repository } from 'typeorm';
 import { Product } from 'src/schema/product.schema';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import CommonService from 'src/common/common.util';
 import { OptionsMessage } from 'src/common/options';
 import { CommonMessages } from 'src/common/common-messages';
@@ -69,23 +69,23 @@ export class NotificationService {
             });
 
             let roleIds: number[] = [];
-    
+
             if (payload.user_type === 'provider') {
-                roleIds = [2]; 
+                roleIds = [2];
             } else if (payload.user_type === 'customer') {
-                roleIds = [3]; 
+                roleIds = [3];
             } else if (payload.user_type === 'both') {
-                roleIds = [2, 3]; 
+                roleIds = [2, 3];
             } else {
                 console.error('Invalid user_type provided.');
                 return;
             }
-    
+
             const userTokens = await this.UserRequestModel.find({
                 where: { user_role: In(roleIds) },
                 select: ['id', 'device_token'],
             });
-    
+
             const deviceTokens = userTokens.map((user) => user.device_token).filter((token) => !!token);
             console.log(deviceTokens)
             if (deviceTokens.length === 0) {
@@ -96,10 +96,10 @@ export class NotificationService {
                 for (let i = 0; i < deviceTokens.length; i += chunkSize) {
                     chunks.push(deviceTokens.slice(i, i + chunkSize));
                 }
-    
+
                 let totalSuccess = 0;
                 let totalFailure = 0;
-    
+
                 for (const chunk of chunks) {
                     const message = {
                         notification: {
@@ -109,9 +109,9 @@ export class NotificationService {
                         },
                         tokens: chunk,
                     };
-    
+
                     const response = await admin.messaging().sendEachForMulticast(message);
-    
+
                     totalSuccess += response.successCount;
                     totalFailure += response.failureCount;
 
@@ -124,21 +124,21 @@ export class NotificationService {
                         }
                     });
                 }
-    
+
                 console.log(
                     `Push Notification Results: ${totalSuccess} sent successfully, ${totalFailure} failed.`,
                 );
             }
-    
-           
-    
+
+
+
         } catch (error) {
             console.error('Error sending push notification:', error.message || error);
             throw new Error('Failed to send push notifications');
         }
     }
-    
- 
+
+
 
 
 
