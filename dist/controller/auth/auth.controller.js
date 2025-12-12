@@ -58,24 +58,13 @@ let LoginController = class LoginController {
         let user_id = req.body.id;
         return { status: true, message: common_messages_1.CommonMessages.LOGOUT_SUCCESS };
     }
-    async Customerregister(req) {
-        let { phone_num, name, dialing_code } = req.body;
-        const response = await this.LoginService.Customerregister(phone_num, name, dialing_code);
-        return response;
+    async customerRegister(body) {
+        return this.LoginService.customerRegister(body);
     }
-    async Customerregisterverify(req) {
-        let { phone_num, otp, dialing_code, name } = req.body;
-        const response = await this.LoginService.Customerregisterverify(phone_num, otp, dialing_code, name);
-        return response;
-    }
-    async login(body) {
-        return this.LoginService.login(body.phone_num, body.dialing_code);
-    }
-    async verifyOTP(body) {
-        return this.LoginService.verifyOTP(body.phone_num, body.otp, body.dialing_code, body.device_token);
+    async customerLogin(body) {
+        return this.LoginService.customerLogin(body.email, body.password, body.device_token);
     }
     async CustomerLogout(req) {
-        let user_id = req.body.id;
         return { status: true, message: common_messages_1.CommonMessages.LOGOUT_SUCCESS };
     }
 };
@@ -146,33 +135,19 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], LoginController.prototype, "ProviderLogout", null);
 __decorate([
-    (0, common_1.Post)('customer/registersendotp'),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], LoginController.prototype, "Customerregister", null);
-__decorate([
-    (0, common_1.Post)('customer/registerverifyotp'),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
-], LoginController.prototype, "Customerregisterverify", null);
-__decorate([
-    (0, common_1.Post)('customer/sendotp'),
+    (0, common_1.Post)('customer/register'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], LoginController.prototype, "login", null);
+], LoginController.prototype, "customerRegister", null);
 __decorate([
-    (0, common_1.Post)('customer/verify'),
+    (0, common_1.Post)('customer/login'),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
-], LoginController.prototype, "verifyOTP", null);
+], LoginController.prototype, "customerLogin", null);
 __decorate([
     (0, common_1.Post)('customer/logout'),
     (0, common_1.UseGuards)(user_guard_1.UserGuard),

@@ -50,11 +50,7 @@ export declare class LoginService {
         token?: undefined;
         provider_profile?: undefined;
     }>;
-    Customerregister(phone_num: any, name: any, dialing_code: any): Promise<{
-        status: boolean;
-        message: any;
-    }>;
-    Customerregisterverify(phone_num: any, otp: any, dialing_code: any, name: any): Promise<{
+    customerRegister(body: any): Promise<{
         status: boolean;
         message: string;
         token: string;
@@ -63,18 +59,21 @@ export declare class LoginService {
         message: any;
         token?: undefined;
     }>;
-    login(phone_num: any, dialing_code: any): Promise<{
-        status: boolean;
-        message: any;
-    }>;
-    verifyOTP(phone_num: any, otp: any, dialing_code: any, device_token: any): Promise<{
+    customerLogin(email: string, password: string, device_token: any): Promise<{
         status: boolean;
         message: string;
         token: string;
+        user_details: {
+            id: number;
+            name: string;
+            email: string;
+            phone_num: number;
+        };
     } | {
         status: boolean;
         message: any;
         token?: undefined;
+        user_details?: undefined;
     }>;
     forgetPassword(email: any): Promise<{
         status: number;

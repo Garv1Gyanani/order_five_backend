@@ -68,11 +68,7 @@ export declare class LoginController {
         status: boolean;
         message: string;
     }>;
-    Customerregister(req: any): Promise<{
-        status: boolean;
-        message: any;
-    }>;
-    Customerregisterverify(req: any): Promise<{
+    customerRegister(body: any): Promise<{
         status: boolean;
         message: string;
         token: string;
@@ -81,26 +77,25 @@ export declare class LoginController {
         message: any;
         token?: undefined;
     }>;
-    login(body: {
-        phone_num: string;
-        dialing_code: any;
-    }): Promise<{
-        status: boolean;
-        message: any;
-    }>;
-    verifyOTP(body: {
-        phone_num: string;
-        otp: string;
-        dialing_code: any;
-        device_token: any;
+    customerLogin(body: {
+        email: string;
+        password: string;
+        device_token?: string;
     }): Promise<{
         status: boolean;
         message: string;
         token: string;
+        user_details: {
+            id: number;
+            name: string;
+            email: string;
+            phone_num: number;
+        };
     } | {
         status: boolean;
         message: any;
         token?: undefined;
+        user_details?: undefined;
     }>;
     CustomerLogout(req: any): Promise<{
         status: boolean;

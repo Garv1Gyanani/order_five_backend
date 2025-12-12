@@ -27,7 +27,7 @@ export class LoginService {
 
   ) { }
 
-  // admin login
+  // ================= ADMIN LOGIN =================
   async Adminlogin(email: any, password: any) {
     const user = await this.UserModel.findOne({ where: { email } });
 
@@ -40,7 +40,6 @@ export class LoginService {
       return {
         status: false,
         message: 'Invalid email or password',
-
       };
     }
 
@@ -53,7 +52,7 @@ export class LoginService {
     };
   }
 
-  // provider login
+  // ================= PROVIDER LOGIN (OTP - KEPT AS IS) =================
   async providerregister(phone_num: any, name: any, dialing_code: any) {
     try {
       const existingUser = await this.UserModel.findOne({ where: { phone_num } });
@@ -61,8 +60,6 @@ export class LoginService {
       if (existingUser) {
         return { status: false, message: 'Phone number already exists', };
       }
-      // const user = this.UserModel.create({ phone_num, name, dialing_code, status: OptionsMessage.PROVIDER_STATUS.Pending, user_role: OptionsMessage.USER_ROLE.PROVIDER });
-      // await this.UserModel.save(user);
 
       const otp = CommonService.generateOTP();
       const expires_at = new Date();
@@ -78,13 +75,8 @@ export class LoginService {
     }
   }
 
-
-
-
-
   async providerregisterverify(phone_num: any, otp: any, dialing_code: any, name: any) {
     try {
-
       const otpRecord = await this.OtpModel.findOne({ where: { dialing_code, phone_num, otp_code: otp }, order: { createdAt: 'DESC' }, });
       if (!otpRecord) {
         return { status: false, message: 'Invalid OTP', };
@@ -102,7 +94,7 @@ export class LoginService {
 
       const token = await this.authService.generateToken({ id: user.id, name: user.name, phone_num: user.phone_num, user_role: user.user_role, });
 
-      // send mail ================================================================
+      // send mail to admin
       const adminuser = await this.UserModel.findOne({ where: { user_role: OptionsMessage.USER_ROLE.ADMIN } });
       if (adminuser) {
         let smtpSettings = await this.settingModel.find();
@@ -120,30 +112,6 @@ export class LoginService {
     }
   }
 
-  // async Providerlogin(phone_num: any, dialing_code: any) {
-  //   const existingUser = await this.UserModel.findOne({ where: { phone_num, user_role: OptionsMessage.USER_ROLE.PROVIDER } });
-
-  //   if (!existingUser) {
-  //     return { status: false, message: CommonMessages.notFound('Provider') };
-  //   }
-  //   if (!existingUser.is_active) {
-  //     return { status: false, message: CommonMessages.user_inactive, };
-  //   }
-  //   if (existingUser.is_block) {
-
-  //     return { status: false, message: CommonMessages.user_block };
-  //   }
-  //   const otp = CommonService.generateOTP();
-  //   const expires_at = new Date();
-  //   expires_at.setMinutes(expires_at.getMinutes() + 5);
-
-  //   const otpData: any = { phone_num, dialing_code, otp_code: otp, expires_at, };
-  //   await this.OtpModel.save(otpData);
-  //   await CommonService.sendOTP(phone_num, otp);
-
-  //   return { status: true, message: CommonMessages.SEND_OTP('phone number'), };
-  // }
-
   async Providerlogin(phone_num: any, dialing_code: any) {
     const existingUser = await this.UserModel.findOne({
       where: { phone_num, user_role: OptionsMessage.USER_ROLE.PROVIDER }
@@ -158,10 +126,8 @@ export class LoginService {
     }
 
     if (existingUser.is_block) {
-
       if (existingUser.is_pr_block) {
         return { status: false, message: CommonMessages.user_block };
-
       }
       const currentDate = new Date();
 
@@ -172,16 +138,6 @@ export class LoginService {
       if (existingUser.block_date && existingUser.block_date <= currentDate) {
         existingUser.is_block = false;
         await this.UserModel.save(existingUser);
-
-        const otp = CommonService.generateOTP();
-        const expires_at = new Date();
-        expires_at.setMinutes(expires_at.getMinutes() + 5);
-
-        const otpData: any = { phone_num, dialing_code, otp_code: otp, expires_at };
-        await this.OtpModel.save(otpData);
-        await CommonService.sendOTP(phone_num, otp);
-
-        return { status: true, message: CommonMessages.SEND_OTP('phone number') };
       }
     }
 
@@ -196,10 +152,8 @@ export class LoginService {
     return { status: true, message: CommonMessages.SEND_OTP('phone number') };
   }
 
-
   async ProviderverifyOTP(phone_num: any, otp: any, dialing_code: any, device_token: any) {
     try {
-
       const otpRecord = await this.OtpModel.findOne({ where: { dialing_code, phone_num, otp_code: otp }, order: { createdAt: 'DESC' }, });
       if (!otpRecord) {
         return { status: false, message: 'Invalid OTP', };
@@ -226,147 +180,139 @@ export class LoginService {
     }
   }
 
-  // Customer login
-  async Customerregister(phone_num: any, name: any, dialing_code: any) {
+
+  // ================= CUSTOMER LOGIN (CONVERTED TO EMAIL & PASSWORD) =================
+
+  /**
+   * Consolidated Customer Register
+   * Expects: name, email, password, phone_num, dialing_code in body
+   */
+  async customerRegister(body: any) {
     try {
-      const existingUser = await this.UserModel.findOne({ where: { dialing_code, phone_num } });
+      const { name, email, password, phone_num, dialing_code } = body;
+
+      // Check Email
+      const existingUser = await this.UserModel.findOne({ where: { email } });
       if (existingUser) {
-        return { status: false, message: 'Phone number already exists', };
+        return { status: false, message: 'Email already exists' };
       }
-      // const user = this.UserModel.create({ phone_num, name, dialing_code, user_role: OptionsMessage.USER_ROLE.CUSTOMER });
-      // await this.UserModel.save(user);
 
-      const otp = CommonService.generateOTP();
-      const expires_at = new Date();
-      expires_at.setMinutes(expires_at.getMinutes() + 5);
+      // Check Phone (Optional but recommended)
+      if (phone_num) {
+        const existingPhone = await this.UserModel.findOne({ where: { phone_num } });
+        if (existingPhone) {
+          return { status: false, message: 'Phone number already exists' };
+        }
+      }
 
-      const otpData: any = {
-        dialing_code, phone_num, otp_code: otp, expires_at, createdAt: moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss')
-      };
-      await this.OtpModel.save(otpData);
-      await CommonService.sendOTP(phone_num, otp);
+      // Hash Password
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-      return { status: true, message: CommonMessages.SEND_OTP('phone number'), };
+      // Save User
+      const user = await this.UserModel.save({
+        name,
+        email,
+        password: hashedPassword,
+        phone_num,
+        dialing_code,
+        user_role: OptionsMessage.USER_ROLE.CUSTOMER,
+        is_active: true, // Auto-activate or set to false if you need email verification
+        createdAt: moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss')
+      });
+
+      // Generate Token
+      const token = await this.authService.generateToken({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        user_role: user.user_role
+      });
+
+      return { status: true, message: 'Registration successful', token };
     } catch (error) {
-      return { status: false, message: error.message, };
+      return { status: false, message: error.message };
     }
   }
 
-  async Customerregisterverify(phone_num: any, otp: any, dialing_code: any, name: any) {
+  /**
+   * Consolidated Customer Login
+   * Expects: email, password, device_token
+   */
+  async customerLogin(email: string, password: string, device_token: any) {
     try {
-
-      const otpRecord = await this.OtpModel.findOne({ where: { dialing_code, phone_num, otp_code: otp }, order: { createdAt: 'DESC' }, });
-      if (!otpRecord) {
-        return { status: false, message: 'Invalid OTP', };
-      }
-
-      if (new Date() > otpRecord.expires_at) {
-        return { status: false, message: 'OTP has expired', };
-      }
-
-      let user = await this.UserModel.findOne({ where: { dialing_code, phone_num } });
-      if (!user) {
-        user = await this.UserModel.save({ phone_num, name, dialing_code, user_role: OptionsMessage.USER_ROLE.CUSTOMER, createdAt: moment.tz('Asia/Riyadh').format('YYYY-MM-DD HH:mm:ss') });
-      }
-      await this.OtpModel.delete({ phone_num, otp_code: otp });
-
-      const token = await this.authService.generateToken({ id: user.id, name: user.name, phone_num: user.phone_num, user_role: user.user_role });
-
-      return { status: true, message: CommonMessages.VERIFIED_OTP_SUCCESS, token, };
-    } catch (error) {
-      return { status: false, message: error.message }
-    }
-  }
-
-  async login(phone_num: any, dialing_code: any) {
-    try {
-      let user = await this.UserModel.findOne({ where: { dialing_code, phone_num, user_role: OptionsMessage.USER_ROLE.CUSTOMER } });
+      // Find User
+      let user = await this.UserModel.findOne({
+        where: { email, user_role: OptionsMessage.USER_ROLE.CUSTOMER }
+      });
 
       if (!user) {
-        return { status: false, message: CommonMessages.notFound('customer'), };
+        return { status: false, message: CommonMessages.notFound('customer') };
       }
+
+      // Verify Password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (!isPasswordValid) {
+        return { status: false, message: 'Invalid email or password' };
+      }
+
+      // Check Active Status
       if (!user.is_active) {
-        return { status: false, message: CommonMessages.user_inactive, };
+        return { status: false, message: CommonMessages.user_inactive };
       }
-      if (user.is_block) {
-        const currentDate = new Date();
 
+      // Check Blocking Logic
+      if (user.is_block) {
         if (user.is_pr_block) {
           return { status: false, message: CommonMessages.user_block };
-
         }
+
+        const currentDate = new Date();
 
         if (user.block_date && user.block_date > currentDate) {
           return { status: false, message: CommonMessages.user_block };
         }
 
+        // Auto-unblock if time passed
         if (user.block_date && user.block_date <= currentDate) {
           user.is_block = false;
+          user.block_date = null;
           await this.UserModel.save(user);
-
-          const otp = CommonService.generateOTP();
-          const expires_at = new Date();
-          expires_at.setMinutes(expires_at.getMinutes() + 5);
-
-          const otpData: any = { phone_num, dialing_code, otp_code: otp, expires_at };
-          await this.OtpModel.save(otpData);
-          await CommonService.sendOTP(phone_num, otp);
-
-          return { status: true, message: CommonMessages.SEND_OTP('phone number') };
         }
       }
 
-      const otp = CommonService.generateOTP();
-      const expires_at = new Date();
-      expires_at.setMinutes(expires_at.getMinutes() + 5);
+      // Update Device Token
+      if (device_token) {
+        user.device_token = device_token;
+        await this.UserModel.update({ id: user.id }, { device_token });
+      }
 
-      const otpData: any = { dialing_code, phone_num, otp_code: otp, expires_at, };
-
-      await this.OtpModel.save(otpData);
-      await CommonService.sendOTP(phone_num, otp);
+      // Generate Token
+      const token = await this.authService.generateToken({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        user_role: user.user_role
+      });
 
       return {
         status: true,
-        message: 'OTP sent successfully!',
+        message: 'Login successful',
+        token,
+        user_details: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone_num: user.phone_num
+        }
       };
-    } catch (error) {
-      return { status: false, message: error.message, }
-    }
-  }
 
-  async verifyOTP(phone_num: any, otp: any, dialing_code: any, device_token: any) {
-    try {
-      // Find the OTP record in the database
-      const otpRecord = await this.OtpModel.findOne({ where: { dialing_code, phone_num, otp_code: otp }, order: { createdAt: 'DESC' }, });
-      if (!otpRecord) {
-        return { status: false, message: 'Invalid OTP', };
-      }
-
-      // Check if the OTP is expired
-      if (new Date() > otpRecord.expires_at) {
-        return { status: false, message: 'OTP has expired', };
-      }
-
-      // Ensure user exists in the database
-      let user = await this.UserModel.findOne({ where: { dialing_code, phone_num } });
-      if (!user) {
-        return { status: false, message: CommonMessages.notFound('Customer') };
-      }
-      user.device_token = device_token;
-      await this.UserModel.update({ id: user.id }, { device_token });
-
-      await this.OtpModel.delete({ phone_num, otp_code: otp });
-
-      const token = await this.authService.generateToken({ id: user.id, name: user.name, phone_num: user.phone_num, user_role: user.user_role });
-
-      return { status: true, message: CommonMessages.VERIFIED_OTP_SUCCESS, token, };
     } catch (error) {
       return { status: false, message: error.message }
     }
   }
 
 
-
+  // ================= PASSWORD RESET (COMMON) =================
   async forgetPassword(email: any) {
     const user = await this.UserModel.findOne({ where: { email: email } });
 
@@ -380,14 +326,11 @@ export class LoginService {
 
     const resetPasswordToken = await this.authService.generateToken({ id: user.id, name: user.name, email: user.email, user_role: user.user_role });
 
-
-
     user.reset_password_token = resetPasswordToken;
     await this.UserModel.save(user);
 
     const frontendBaseUrl = 'https://order5.secretdemo.in';
     const resetPasswordLink = `${frontendBaseUrl}/reset-password?${resetPasswordToken}`;
-
 
     let smtpSettings = await this.settingModel.find();
     smtpSettings = JSON.parse(JSON.stringify(smtpSettings))
@@ -421,7 +364,6 @@ export class LoginService {
     }
   }
 
-
   async resetPassword(body: any) {
     let user = await this.UserModel.findOne({ where: { reset_password_token: body.token } });
 
@@ -442,7 +384,6 @@ export class LoginService {
     }
 
     user.password = await bcrypt.hash(body.password, 10);
-
     user.reset_password_token = null;
 
     await this.UserModel.save(user);

@@ -25,21 +25,21 @@ export class LoginController {
 
   @Post('admin/forget-password')
   async forgetPassword(
-      @Body('email') email: string
+    @Body('email') email: string
   ) {
-      return await this.LoginService.forgetPassword(email);
+    return await this.LoginService.forgetPassword(email);
   }
 
-  
+
   @Post('admin/reset-password')
   async resetPassword(
-      @Body() body: {
-          token: string;
-          password: string;
-          confirm_password: string;
-      }
+    @Body() body: {
+      token: string;
+      password: string;
+      confirm_password: string;
+    }
   ) {
-      return await this.LoginService.resetPassword(body);
+    return await this.LoginService.resetPassword(body);
   }
 
 
@@ -68,8 +68,8 @@ export class LoginController {
   }
 
   @Post('provider/loginverify')
-  async ProviderverifyOTP(@Body() body: { phone_num: string, otp: string, dialing_code: any ,device_token:any}) {
-    return this.LoginService.ProviderverifyOTP(body.phone_num, body.otp, body.dialing_code,body.device_token);
+  async ProviderverifyOTP(@Body() body: { phone_num: string, otp: string, dialing_code: any, device_token: any }) {
+    return this.LoginService.ProviderverifyOTP(body.phone_num, body.otp, body.dialing_code, body.device_token);
   }
 
   @Post('provider/logout')
@@ -80,37 +80,22 @@ export class LoginController {
   }
 
   // customer login
-  @Post('customer/registersendotp')
-  async Customerregister(@Req() req) {
-    let { phone_num, name, dialing_code } = req.body
-    const response = await this.LoginService.Customerregister(phone_num, name, dialing_code);
-    return response;
+  @Post('customer/register')
+  async customerRegister(@Body() body: any) {
+    // Body should contain: name, email, password, phone_num, dialing_code
+    return this.LoginService.customerRegister(body);
   }
 
-  @Post('customer/registerverifyotp')
-  async Customerregisterverify(@Req() req) {
-    let { phone_num, otp, dialing_code, name } = req.body
-
-    const response = await this.LoginService.Customerregisterverify(phone_num, otp, dialing_code, name);
-    return response;
-  }
-
-  @Post('customer/sendotp')
-  async login(@Body() body: { phone_num: string, dialing_code: any }) {
-    return this.LoginService.login(body.phone_num, body.dialing_code);
-  }
-
-  // Verify OTP and generate JWT token
-  @Post('customer/verify')
-  async verifyOTP(@Body() body: { phone_num: string, otp: string, dialing_code: any ,device_token :any}) {
-    return this.LoginService.verifyOTP(body.phone_num, body.otp, body.dialing_code , body.device_token);
+  @Post('customer/login')
+  async customerLogin(@Body() body: { email: string, password: string, device_token?: string }) {
+    return this.LoginService.customerLogin(body.email, body.password, body.device_token);
   }
 
   @Post('customer/logout')
   @UseGuards(UserGuard)
   async CustomerLogout(@Req() req) {
-    let user_id = req.body.id
     return { status: true, message: CommonMessages.LOGOUT_SUCCESS };
   }
+
 
 }
